@@ -20,4 +20,5 @@ import { MatButtonModule } from '@angular/material/button';
   providers: [],
   bootstrap: [AppComponent],
 })
-export class AppModule {}
+export class AppModule {
+}
