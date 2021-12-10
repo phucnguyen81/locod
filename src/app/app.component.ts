@@ -7,6 +7,7 @@ import { Component } from '@angular/core';
 })
 export class AppComponent {
   title = 'locod';
+  clipboardText = '';
 
   copy(event: Event): void {
     event.preventDefault();
@@ -15,6 +16,14 @@ export class AppComponent {
 
   paste(event: Event): void {
     event.preventDefault();
-    console.log('Paste is clicked');
+    navigator.clipboard
+      .readText()
+      .then((text: string) => {
+        this.clipboardText = text;
+        console.log('Pasted: ' + this.clipboardText);
+      })
+      .catch((error: any) => {
+        alert('Failed to read from clipboard: ' + String(error));
+      });
   }
 }
