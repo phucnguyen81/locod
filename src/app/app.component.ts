@@ -4,12 +4,6 @@ import { FormControl } from '@angular/forms';
 import * as rx from 'rxjs';
 import * as op from 'rxjs/operators';
 
-interface Tick {
-  index: number;
-  duration: number;
-  hasFocus: boolean;
-}
-
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
