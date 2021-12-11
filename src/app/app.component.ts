@@ -16,37 +16,36 @@ interface Tick {
   styleUrls: ['./app.component.css'],
 })
 export class AppComponent implements OnInit, OnDestroy {
-  tickIntervalInMillis = 1000;
-  pasteIntervalInMillis = 2000;
-
   title = 'locod';
-
-  subscription = new rx.Subscription();
-
-  // tick$: events generated periodically
-  tick$: rx.Observable<Tick> = rx.interval(this.tickIntervalInMillis).pipe(
-    op.map((index) => ({
-      index,
-      duration: this.tickIntervalInMillis,
-      hasFocus: document.hasFocus(),
-    }))
-  );
-
-  // paste$: paste events sampled every 2 seconds
-  paste$: rx.Observable<Tick> = this.tick$.pipe(
-    op.sample(rx.interval(this.pasteIntervalInMillis))
-  );
 
   textControl = new FormControl('');
 
-  pasteIntervalID = 0;
+  private clipboardIntervalMillis = 1000;
+
+  private clipboardText$: rx.Observable<string> = rx
+    .interval(this.clipboardIntervalMillis)
+    .pipe(
+      op.switchMap(() => {
+        if (document.hasFocus()) {
+          return rx.from(navigator.clipboard.readText());
+        } else {
+          return rx.EMPTY;
+        }
+      })
+    );
+
+  private subscription = new rx.Subscription();
 
   ngOnInit(): void {
     this.subscription.add(
-      this.paste$
+      this.clipboardText$
         .pipe(
-          op.tap(() => {
-            this.paste(new Event('paste'));
+          op.tap((text) => {
+            this.textControl.setValue(text);
+          }),
+          op.catchError((error) => {
+            console.log(error);
+            return rx.EMPTY;
           })
         )
         .subscribe()
