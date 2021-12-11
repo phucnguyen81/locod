@@ -16,11 +16,10 @@ interface Tick {
   styleUrls: ['./app.component.css'],
 })
 export class AppComponent implements OnInit, OnDestroy {
-  title = 'locod';
-
-  textControl = new FormControl('');
-
+  private maxItems = 10;
   private clipboardIntervalMillis = 1000;
+
+  textControls: FormControl[] = [];
 
   private clipboardText$: rx.Observable<string> = rx
     .interval(this.clipboardIntervalMillis)
@@ -31,7 +30,8 @@ export class AppComponent implements OnInit, OnDestroy {
         } else {
           return rx.EMPTY;
         }
-      })
+      }),
+      op.distinctUntilChanged()
     );
 
   private subscription = new rx.Subscription();
@@ -41,7 +41,10 @@ export class AppComponent implements OnInit, OnDestroy {
       this.clipboardText$
         .pipe(
           op.tap((text) => {
-            this.textControl.setValue(text);
+            this.textControls.unshift(new FormControl(text));
+            if (this.textControls.length > this.maxItems) {
+              this.textControls.pop();
+            }
           }),
           op.catchError((error) => {
             console.log(error);
@@ -57,31 +60,16 @@ export class AppComponent implements OnInit, OnDestroy {
   }
 
   // Read from textarea and write to clipboard
-  copy(event: Event): void {
+  copy(event: Event, textControl: FormControl): void {
     event.preventDefault();
-    const text = this.textControl.value;
+    const text = textControl.value;
     navigator.clipboard
       .writeText(text)
       .then(() => {
-        console.log('Text copied');
+        console.log('Copied to clipboard');
       })
       .catch((error) => {
-        console.log('Failed to write to clipboard: ' + String(error));
+        console.log('Copied to clipboard: Failed: ' + String(error));
       });
-  }
-
-  // Read from clipboard and write to textarea
-  paste(event: Event): void {
-    event.preventDefault();
-    if (document.hasFocus()) {
-      navigator.clipboard
-        .readText()
-        .then((text: string) => {
-          this.textControl.setValue(text);
-        })
-        .catch((error: any) => {
-          console.log('Failed to read from clipboard: ' + String(error));
-        });
-    }
   }
 }
