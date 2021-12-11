@@ -1,6 +1,14 @@
-import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { FormControl } from '@angular/forms';
-import { MatInput } from '@angular/material/input';
+
+import * as rx from 'rxjs';
+import * as op from 'rxjs/operators';
+
+interface Tick {
+  index: number;
+  duration: number;
+  hasFocus: boolean;
+}
 
 @Component({
   selector: 'app-root',
@@ -8,31 +16,45 @@ import { MatInput } from '@angular/material/input';
   styleUrls: ['./app.component.css'],
 })
 export class AppComponent implements OnInit, OnDestroy {
+  tickIntervalInMillis = 1000;
+  pasteIntervalInMillis = 2000;
+
   title = 'locod';
 
-  tickDuration = 1000;
+  subscription = new rx.Subscription();
+
+  // tick$: events generated periodically
+  tick$: rx.Observable<Tick> = rx.interval(this.tickIntervalInMillis).pipe(
+    op.map((index) => ({
+      index,
+      duration: this.tickIntervalInMillis,
+      hasFocus: document.hasFocus(),
+    }))
+  );
+
+  // paste$: paste events sampled every 2 seconds
+  paste$: rx.Observable<Tick> = this.tick$.pipe(
+    op.sample(rx.interval(this.pasteIntervalInMillis))
+  );
 
   textControl = new FormControl('');
 
   pasteIntervalID = 0;
 
   ngOnInit(): void {
-    this.startPaste();
+    this.subscription.add(
+      this.paste$
+        .pipe(
+          op.tap(() => {
+            this.paste(new Event('paste'));
+          })
+        )
+        .subscribe()
+    );
   }
 
   ngOnDestroy(): void {
-    this.stopPaste();
-  }
-
-  // Read from clipboard periodically and write to textarea
-  startPaste(): void {
-    const paste = () => this.paste(new Event('custompaste'));
-    this.pasteIntervalID = window.setInterval(paste, 3 * this.tickDuration);
-  }
-
-  // Cancel the paste calls
-  stopPaste() {
-    window.clearInterval(this.pasteIntervalID);
+    this.subscription.unsubscribe();
   }
 
   // Read from textarea and write to clipboard
