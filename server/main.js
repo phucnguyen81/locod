@@ -43,24 +43,13 @@ const server = http.createServer(app);
 const { Server, Socket } = require("socket.io");
 const io = new Server(server);
 io.on("connection", (socket) => {
-  console.log("a user connected on socket id=" + socket.id);
   const context = {
     clipboardTimer: null,
     clipboardText: null,
   };
   socket.on("disconnect", () => {
-    // io sends to everyone including the current client
-    io.emit("chat:text", "a user disconnected from socket id=" + socket.id);
-  });
-  socket.on("chat", (msg) => {
-    // Should broadcast to others but for simplicity send to everyone include
-    // the current client
-    socket.broadcast.emit("chat:text", msg);
-  });
-  socket.on("read-clipboard", () => {
-    const text = clipboard.readSync();
-    if (text != undefined) {
-      socket.emit("clipboard:text", text);
+    if (context.clipboardTimer) {
+      clearTimeout(context.clipboardTimer);
     }
   });
   socket.on("notify-clipboard", () => {
