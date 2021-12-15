@@ -41,25 +41,41 @@ const server = http.createServer(app);
  * Initialize Socket.io
  */
 const { Server, Socket } = require("socket.io");
-const { read } = require("fs");
 const io = new Server(server);
 io.on("connection", (socket) => {
   console.log("a user connected on socket id=" + socket.id);
+  const context = {
+    clipboardTimer: null,
+    clipboardText: null,
+  };
   socket.on("disconnect", () => {
     // io sends to everyone including the current client
-    io.emit("chat message", "a user disconnected from socket id=" + socket.id);
+    io.emit("chat:text", "a user disconnected from socket id=" + socket.id);
   });
-  socket.on("chat message", (msg) => {
+  socket.on("chat", (msg) => {
     // Should broadcast to others but for simplicity send to everyone include
     // the current client
-    socket.broadcast.emit("chat message", msg);
-    console.log("message: " + msg);
+    socket.broadcast.emit("chat:text", msg);
   });
-  socket.on("clipboard:copy", () => {
-    console.log("on clipboard:copy");
+  socket.on("read-clipboard", () => {
     const text = clipboard.readSync();
     if (text != undefined) {
-      socket.emit("clipboard:copy", text);
+      socket.emit("clipboard:text", text);
+    }
+  });
+  socket.on("notify-clipboard", () => {
+    context.clipboardTimer = setTimeout(function run() {
+      const text = clipboard.readSync();
+      if (text !== undefined && text !== context.clipboardText) {
+        context.clipboardText = text;
+        socket.emit("clipboard:text", context.clipboardText);
+      }
+      context.clipboardTimer = setTimeout(run, 2000);
+    }, 2000);
+  });
+  socket.on("stop-notify-clipboard", () => {
+    if (context.clipboardTimer) {
+      clearTimeout(context.clipboardTimer);
     }
   });
 });

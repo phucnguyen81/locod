@@ -20,25 +20,30 @@
 
       form.addEventListener("submit", function (e) {
         e.preventDefault();
-        if (input.value) {
-          if (input.value === "clipboard:copy") {
-            socket.emit("clipboard:copy", "");
-          }
-          else {
-            socket.emit("chat message", input.value);
-          }
-          input.value = "";
+        const value = input.value || "";
+        const index = value.indexOf(":");
+        const event = value.substring(0, index);
+        const parms = value.substring(index + 1);
+        if (event) {
+          socket.emit(event, parms);
         }
+        else {
+          socket.emit(value);
+        }
+        input.value = "";
       });
 
-      socket.on("chat message", function (msg) {
+      socket.on("chat:text", function (msg) {
         var item = document.createElement("li");
         item.textContent = msg;
         messages.appendChild(item);
         window.scrollTo(0, document.body.scrollHeight);
       });
-      socket.on("clipboard:copy", function (msg) {
-        console.log("clipboard:copy", msg);
+      socket.on("clipboard:text", function (msg) {
+        var item = document.createElement("li");
+        item.textContent = `Clipboard:\n${msg}`;
+        messages.appendChild(item);
+        window.scrollTo(0, document.body.scrollHeight);
       });
     </script>
   </body>
