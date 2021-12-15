@@ -9,6 +9,22 @@ const debug = require("debug")("express-browser-reload:server");
 const http = require("http");
 
 /**
+ * Have to use import() function here to load ES module `clipboardy`.
+ * See: https://nodejs.org/api/esm.html#import-expressions
+ */
+const clipboard = {
+  readSync() {
+    return undefined;
+  },
+};
+import("clipboardy")
+  .then((module) => {
+    const { readSync } = module.default;
+    clipboard.readSync = readSync;
+  })
+  .catch((err) => console.error(err));
+
+/**
  * Get port from environment and store in Express.
  */
 
@@ -24,7 +40,8 @@ const server = http.createServer(app);
 /**
  * Initialize Socket.io
  */
-const { Server } = require("socket.io");
+const { Server, Socket } = require("socket.io");
+const { read } = require("fs");
 const io = new Server(server);
 io.on("connection", (socket) => {
   console.log("a user connected on socket id=" + socket.id);
@@ -37,6 +54,13 @@ io.on("connection", (socket) => {
     // the current client
     socket.broadcast.emit("chat message", msg);
     console.log("message: " + msg);
+  });
+  socket.on("clipboard:copy", () => {
+    console.log("on clipboard:copy");
+    const text = clipboard.readSync();
+    if (text != undefined) {
+      socket.emit("clipboard:copy", text);
+    }
   });
 });
 

@@ -21,7 +21,12 @@
       form.addEventListener("submit", function (e) {
         e.preventDefault();
         if (input.value) {
-          socket.emit("chat message", input.value);
+          if (input.value === "clipboard:copy") {
+            socket.emit("clipboard:copy", "");
+          }
+          else {
+            socket.emit("chat message", input.value);
+          }
           input.value = "";
         }
       });
@@ -31,6 +36,9 @@
         item.textContent = msg;
         messages.appendChild(item);
         window.scrollTo(0, document.body.scrollHeight);
+      });
+      socket.on("clipboard:copy", function (msg) {
+        console.log("clipboard:copy", msg);
       });
     </script>
   </body>
