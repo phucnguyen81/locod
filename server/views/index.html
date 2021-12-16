@@ -33,15 +33,10 @@
         input.value = "";
       });
 
-      socket.on("chat:text", function (msg) {
-        var item = document.createElement("li");
-        item.textContent = msg;
-        messages.appendChild(item);
-        window.scrollTo(0, document.body.scrollHeight);
-      });
       socket.on("clipboard:text", function (msg) {
-        var item = document.createElement("li");
-        item.textContent = `Clipboard:\n${msg}`;
+        var item = document.createElement("textarea");
+        item.className = "clip-text";
+        item.textContent = msg;
         messages.appendChild(item);
         window.scrollTo(0, document.body.scrollHeight);
       });

@@ -3,76 +3,32 @@
 /**
  * Module dependencies.
  */
-
 const app = require("./app");
 const debug = require("debug")("express-browser-reload:server");
 const http = require("http");
 
 /**
- * Have to use import() function here to load ES module `clipboardy`.
- * See: https://nodejs.org/api/esm.html#import-expressions
- */
-const clipboard = {
-  readSync() {
-    return undefined;
-  },
-};
-import("clipboardy")
-  .then((module) => {
-    const { readSync } = module.default;
-    clipboard.readSync = readSync;
-  })
-  .catch((err) => console.error(err));
-
-/**
  * Get port from environment and store in Express.
  */
-
 const port = normalizePort(process.env.PORT || "3000");
 app.set("port", port);
 
 /**
  * Create HTTP server.
  */
-
 const server = http.createServer(app);
 
 /**
  * Initialize Socket.io
  */
-const { Server, Socket } = require("socket.io");
+const { Server } = require("socket.io");
 const io = new Server(server);
-io.on("connection", (socket) => {
-  const context = {
-    clipboardTimer: null,
-    clipboardText: null,
-  };
-  socket.on("disconnect", () => {
-    if (context.clipboardTimer) {
-      clearTimeout(context.clipboardTimer);
-    }
-  });
-  socket.on("notify-clipboard", () => {
-    context.clipboardTimer = setTimeout(function run() {
-      const text = clipboard.readSync();
-      if (text !== undefined && text !== context.clipboardText) {
-        context.clipboardText = text;
-        socket.emit("clipboard:text", context.clipboardText);
-      }
-      context.clipboardTimer = setTimeout(run, 2000);
-    }, 2000);
-  });
-  socket.on("stop-notify-clipboard", () => {
-    if (context.clipboardTimer) {
-      clearTimeout(context.clipboardTimer);
-    }
-  });
-});
+const clipboard = require("./clipboard");
+io.on("connection", clipboard);
 
 /**
  * Listen on provided port, on all network interfaces.
  */
-
 server.listen(port);
 server.on("error", onError);
 server.on("listening", onListening);
@@ -80,7 +36,6 @@ server.on("listening", onListening);
 /**
  * Normalize a port into a number, string, or false.
  */
-
 function normalizePort(val) {
   const port = parseInt(val, 10);
 
@@ -100,7 +55,6 @@ function normalizePort(val) {
 /**
  * Event listener for HTTP server "error" event.
  */
-
 function onError(error) {
   if (error.syscall !== "listen") {
     throw error;
@@ -126,7 +80,6 @@ function onError(error) {
 /**
  * Event listener for HTTP server "listening" event.
  */
-
 function onListening() {
   const addr = server.address();
   const bind = typeof addr === "string" ? "pipe " + addr : "port " + addr.port;
