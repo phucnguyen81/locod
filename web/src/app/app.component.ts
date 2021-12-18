@@ -24,7 +24,9 @@ export class AppComponent implements OnInit, OnDestroy {
 
   textControls: FormControl[] = [];
 
-  private clipboardText$: rx.Observable<string> = rx
+  private socketText$ = new rx.ReplaySubject<string>(1);
+
+  private navigatorText$: rx.Observable<string> = rx
     .interval(this.clipboardIntervalMillis)
     .pipe(
       op.switchMap(() => {
@@ -33,18 +35,21 @@ export class AppComponent implements OnInit, OnDestroy {
         } else {
           return rx.EMPTY;
         }
-      }),
-      op.distinctUntilChanged()
+      })
     );
+
+  private clipboardText$: rx.Observable<string> = rx
+    .merge(this.socketText$, this.navigatorText$)
+    .pipe(op.distinctUntilChanged());
 
   private subscription = new rx.Subscription();
 
-  constructor() {
-    // this.socket.emit('notify-clipboard');
-    // this.socket.on('clipboard:text', console.log);
-  }
-
   ngOnInit(): void {
+    this.socket.emit('notify-clipboard');
+    this.socket.on('clipboard:text', (msg: string) =>
+      this.socketText$.next(msg)
+    );
+
     this.subscription.add(
       this.clipboardText$
         .pipe(
@@ -61,16 +66,14 @@ export class AppComponent implements OnInit, OnDestroy {
         )
         .subscribe()
     );
-    this.socket.emit('notify-clipboard');
-    this.socket.on('clipboard:text', console.log);
   }
 
   ngOnDestroy(): void {
-    this.socket.emit('stop-notify-clipboard');
     this.subscription.unsubscribe();
+    this.socket.emit('stop-notify-clipboard');
   }
 
-  // Read from textarea and write to clipboard
+  // Write text content of an item to clipboard
   copy(event: Event, textControl: FormControl): void {
     event.preventDefault();
     const text = textControl.value;
