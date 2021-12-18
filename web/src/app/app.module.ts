@@ -7,8 +7,10 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatInputModule } from '@angular/material/input';
-import { MatSliderModule } from '@angular/material/slider';
 import { MatListModule } from '@angular/material/list';
+import { MatSliderModule } from '@angular/material/slider';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { MatTooltipModule } from '@angular/material/tooltip';
 
 import { AppComponent } from './app.component';
 
@@ -23,6 +25,8 @@ import { AppComponent } from './app.component';
     MatInputModule,
     MatListModule,
     MatSliderModule,
+    MatSlideToggleModule,
+    MatTooltipModule,
     ReactiveFormsModule,
   ],
   providers: [],

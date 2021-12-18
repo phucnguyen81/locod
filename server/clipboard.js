@@ -19,14 +19,18 @@ function onConnection(socket) {
     timeout: 2000,
     timer: null,
     text: null,
+    clearTimer() {
+      if (this.timer) {
+        clearTimeout(this.timer);
+      }
+    },
   };
 
   socket.on("disconnect", () => {
-    if (context.timer) {
-      clearTimeout(context.timer);
-    }
+    context.clearTimer();
   });
   socket.on("notify-clipboard", () => {
+    context.clearTimer();
     context.timer = setTimeout(function run() {
       const text = clipboard.readSync();
       if (text !== undefined && text !== context.text) {
@@ -37,9 +41,7 @@ function onConnection(socket) {
     }, context.timeout);
   });
   socket.on("stop-notify-clipboard", () => {
-    if (context.timer) {
-      clearTimeout(context.timer);
-    }
+    context.clearTimer();
   });
 }
 

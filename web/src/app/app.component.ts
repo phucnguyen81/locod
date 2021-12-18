@@ -3,6 +3,7 @@ import { FormControl } from '@angular/forms';
 
 import * as rx from 'rxjs';
 import * as op from 'rxjs/operators';
+import { Socket, io } from 'socket.io-client';
 
 @Component({
   selector: 'app-root',
@@ -10,8 +11,16 @@ import * as op from 'rxjs/operators';
   styleUrls: ['./app.component.css'],
 })
 export class AppComponent implements OnInit, OnDestroy {
+  private readonly socket: Socket = io();
+
   private maxItems = 10;
   private clipboardIntervalMillis = 1000;
+
+  toggleChecked = true;
+
+  get toggleTooltip(): string {
+    return 'Monitor Clipboard: ' + (this.toggleChecked ? 'On' : 'Off');
+  }
 
   textControls: FormControl[] = [];
 
@@ -19,7 +28,7 @@ export class AppComponent implements OnInit, OnDestroy {
     .interval(this.clipboardIntervalMillis)
     .pipe(
       op.switchMap(() => {
-        if (document.hasFocus()) {
+        if (document.hasFocus() && navigator.clipboard) {
           return rx.from(navigator.clipboard.readText());
         } else {
           return rx.EMPTY;
@@ -29,6 +38,11 @@ export class AppComponent implements OnInit, OnDestroy {
     );
 
   private subscription = new rx.Subscription();
+
+  constructor() {
+    // this.socket.emit('notify-clipboard');
+    // this.socket.on('clipboard:text', console.log);
+  }
 
   ngOnInit(): void {
     this.subscription.add(
@@ -47,9 +61,12 @@ export class AppComponent implements OnInit, OnDestroy {
         )
         .subscribe()
     );
+    this.socket.emit('notify-clipboard');
+    this.socket.on('clipboard:text', console.log);
   }
 
   ngOnDestroy(): void {
+    this.socket.emit('stop-notify-clipboard');
     this.subscription.unsubscribe();
   }
 
