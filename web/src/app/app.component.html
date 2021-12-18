@@ -7,24 +7,15 @@
     [matTooltipPosition]="'right'"
   ></mat-slide-toggle>
 </div>
-<ng-container *ngFor="let textControl of textControls; let idx = index">
-  <mat-card class="card">
-    <mat-card-header>
-      <mat-card-subtitle>{{ idx + 1 }}</mat-card-subtitle>
-    </mat-card-header>
-    <mat-card-content>
-      <textarea
-        matInput
-        [formControl]="textControl"
-        class="text"
-        rows="2"
-      ></textarea>
-    </mat-card-content>
-    <mat-divider inset></mat-divider>
-    <mat-card-actions>
-      <button mat-button color="primary" (click)="copy($event, textControl)">
-        Copy
-      </button>
-    </mat-card-actions>
-  </mat-card>
-</ng-container>
+<mat-nav-list>
+  <mat-list-item *ngFor="let textControl of textControls">
+    <div matLine>{{ textControl.value }}</div>
+    <button
+      mat-icon-button
+      [matTooltip]="'Copy'"
+      (click)="copy($event, textControl)"
+    >
+      <mat-icon>content_copy</mat-icon>
+    </button>
+  </mat-list-item>
+</mat-nav-list>
